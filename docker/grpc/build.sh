@@ -1,0 +1,1 @@
+sudo $(which docker) buildx build --load -t goodbaikin/grpc-builder .
