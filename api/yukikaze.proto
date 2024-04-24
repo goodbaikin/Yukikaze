@@ -1,0 +1,61 @@
+syntax = "proto3";
+
+package yukikaze;
+
+service Encoder {
+	rpc Encode(EncodeRequest) returns (EncodeResponse) {}
+	rpc EncodeStatus(StatusRequest) returns (stream StatusResponse) {}
+	rpc EncodeCancel(CancelRequest) returns (CancelResponse) {}
+}
+
+enum Decoder {
+	DEFAULT = 0;
+	QSV = 1;
+	CUVID = 2;
+}
+
+enum EncoderType {
+	X264 = 0;
+	X265 = 1;
+	QSVENC = 2;
+	NVENC = 3;
+	VCEENC = 4;
+	SVT_AV1 = 5;
+}
+
+message EncodeRequest {
+	string input_name = 1;
+	string output_name = 2;
+	uint32 service_id = 3;
+
+	EncoderType encoder_type = 4;
+	string encoder = 13;
+	string encoder_option = 14;
+
+	// enable/disable features
+	bool disable_chapter = 5;
+
+	bool disable_delogo = 6;
+	bool ignore_no_logo = 7;
+
+	bool enable_subtitles = 8;
+	bool ignore_no_drcsmap = 9;
+
+	// decoders
+	Decoder mpeg2_decoder = 10;
+	Decoder h264_decoder = 11;
+
+	int32 cmoutmask = 12;
+}
+
+message EncodeResponse {}
+
+message StatusRequest {}
+
+message StatusResponse {
+	bytes log = 1;
+}
+
+message CancelRequest {}
+
+message CancelResponse {}
