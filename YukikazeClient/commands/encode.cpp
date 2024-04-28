@@ -81,10 +81,10 @@ void setupEncodeCommand(CLI::App *app, std::shared_ptr<std::string> server) {
 	app->add_option("output", opt->output, "出力ファイルパス")->required();
 	app->add_option("serviceId", opt->serviceId, "処理するサービスIDを指定")->required();
 
-	app->add_option("-om,--cmoutmask", opt->cmoutmask, "出力マスク[2]");
-	app->add_option("-et,--encoder-type", opt->encoderType, "対応エンコーダ: [x264],x265,QSVEnc,NVEnc,VCEEnc,SVT-AV");
+	app->add_option("--cmoutmask", opt->cmoutmask, "出力マスク[2]");
+	app->add_option("--encoder-type", opt->encoderType, "対応エンコーダ: [x264],x265,QSVEnc,NVEnc,VCEEnc,SVT-AV");
 	app->add_option("-e,--encoder", opt->encoder, "エンコーダへのパス[x264]");
-	app->add_option("-eo,--encoder-option", opt->encoderOption, "エンコーダに渡す引数");
+	app->add_option("--encoder-option", opt->encoderOption, "エンコーダに渡す引数");
 	app->add_option("--disable-chapter", opt->disable_chapter, "チャプター・CM解析を行わない");
 	app->add_option("--disable-delogo", opt->disable_delogo, "ロゴ消しをしない");
 	app->add_option("--ignore-no-logo", opt->ignore_no_logo, "ロゴが見つからなくても処理を続行する");
