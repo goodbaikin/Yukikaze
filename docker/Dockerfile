@@ -18,6 +18,6 @@ RUN cd yukikaze/YukikazeClient &&\
 	cmake .. &&\
 	make -j $(nproc)
 
-FROM goodbaikin/amatsukaze:v0.14
+FROM goodbaikin/amatsukaze:v0.15
 COPY --from=0 /yukikaze/YukikazeServer/build/yukikaze_server /usr/local/bin
 COPY --from=0 /yukikaze/YukikazeClient/build/yukikaze_client /usr/local/bin
