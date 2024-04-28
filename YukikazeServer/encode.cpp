@@ -128,7 +128,7 @@ void YukikazeServiceImpl::parseRequest(const EncodeRequest* request, std::vector
 	if (request->disable_delogo() || logopath_.count(request->service_id()) == 0) {
 		args.push_back("--no-delogo");
 	}
-	if (!request->disable_delogo() && logopath_.count(request->service_id()) > 0) { // logo exists
+	if (!request->disable_delogo() && logopath_.count(request->service_id() % 100000) > 0) { // logo exists
 		args.push_back("--logo");
 		args.push_back(logopath_[request->service_id() % 100000].string());
 	}
@@ -141,6 +141,6 @@ void YukikazeServiceImpl::parseRequest(const EncodeRequest* request, std::vector
 		args.push_back("--subtitles");
 	}
 	if (request->ignore_no_drcsmap()) {
-		args.push_back("ignore-no-drcsmap");
+		args.push_back("--ignore-no-drcsmap");
 	}
 }
