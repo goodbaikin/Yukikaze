@@ -40,6 +40,7 @@ yukikaze::SubProcess::SubProcess(std::filesystem::path logpath, const std::vecto
 		break;
 	default:
 		pid_ = pid;
+		join();
 		break;
 	}
 }
@@ -49,28 +50,16 @@ yukikaze::SubProcess::~SubProcess() {
 	pid_ = -1;
 }
 
-bool yukikaze::SubProcess::isRunning() {
-	if (pid_ == -1) {
-		return false;
-	}
-	if (kill(pid_, 0) == -1) {
-		return false;
-	}
-	return true;
-}
-
 void yukikaze::SubProcess::join() {
 	waitpid(pid_, &status_, 0);
 }
 
 int yukikaze::SubProcess::cancel() {
 	kill(pid_, SIGTERM);
-	return exitCode();
+	join();
+	return WEXITSTATUS(status_);
 }
 
 int yukikaze::SubProcess::exitCode() {
-	if (isRunning()) {
-		join();
-	}
 	return WEXITSTATUS(status_);
 }

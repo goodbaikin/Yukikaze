@@ -24,6 +24,8 @@ private:
 	std::filesystem::path recordedpath_;
 	std::map<int,std::filesystem::path> logopath_;
 	std::unique_ptr<SubProcess> encoder_;
+	bool isRunning_ = false;
+	bool hasFailed_ = false;
 
 	// methods
 	void parseRequest(const EncodeRequest*, std::vector<std::string>&);

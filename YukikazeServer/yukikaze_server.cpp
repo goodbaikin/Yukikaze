@@ -47,9 +47,18 @@ yukikaze::YukikazeServiceImpl::~YukikazeServiceImpl () {
 
 grpc::Status yukikaze::YukikazeServiceImpl::EncodeStatus(grpc::ServerContext* ctx, const yukikaze::StatusRequest* request, grpc::ServerWriter<StatusResponse>* stream) {
 	spdlog::info("Status Request");
+	yukikaze::StatusResponse resp;
 
-	if (encoder_ == NULL || !encoder_->isRunning()) {
-		return grpc::Status(grpc::StatusCode::OK, "no running jobs");
+	if (encoder_ == NULL && !isRunning_) {
+		resp.set_log("no running jobs\n");
+		stream->Write(resp);
+		return grpc::Status::OK;
+	}
+
+	if (!isRunning_ && !hasFailed_ && encoder_ != NULL) {
+		resp.set_log("successfully finished\n");
+		stream->Write(resp);
+		return grpc::Status::OK;
 	}
 
 	int fd = open(logpath_.c_str(), O_RDONLY);
@@ -57,9 +66,17 @@ grpc::Status yukikaze::YukikazeServiceImpl::EncodeStatus(grpc::ServerContext* ct
 		return grpc::Status(grpc::StatusCode::FAILED_PRECONDITION, "failed to open the log file");
 	}
 
-	yukikaze::StatusResponse resp;
 	char buf[512];
-	while (encoder_ != NULL && encoder_->isRunning()) {
+	if (hasFailed_) {
+		int ret = 1;
+		while (ret > 0) {
+			ret = read(fd,buf,sizeof(buf));
+			resp.set_log(std::string(buf, ret));
+			stream->Write(resp);
+		}
+	}
+
+	while (isRunning_) {
 		int ret = read(fd, buf, sizeof(buf));
 		if (ret > 0) {
 			resp.set_log(std::string(buf, ret));
@@ -76,7 +93,7 @@ grpc::Status yukikaze::YukikazeServiceImpl::EncodeStatus(grpc::ServerContext* ct
 grpc::Status yukikaze::YukikazeServiceImpl::EncodeCancel(grpc::ServerContext* ctx, const yukikaze::CancelRequest* request, yukikaze::CancelResponse* reply) {
 	spdlog::info("Cancel Request");
 
-	if (encoder_ == NULL) {
+	if (!isRunning_) {
 		return grpc::Status(grpc::StatusCode::OK, "no running jobs");
 	}
 

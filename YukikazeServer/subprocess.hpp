@@ -10,7 +10,6 @@ class SubProcess {
 public:
 	SubProcess(std::filesystem::path, const std::vector<std::string> &);
 	~SubProcess();
-	bool isRunning();
 	void join();
 	int cancel();
 	int exitCode();

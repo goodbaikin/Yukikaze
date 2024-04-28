@@ -13,12 +13,8 @@ grpc::Status YukikazeServiceImpl::Encode(grpc::ServerContext* ctx, const EncodeR
 	std::vector<std::string> args;
 	parseRequest(request, args);
 
-	if (encoder_ != NULL ) {
-		if (encoder_->isRunning()) {
-			encoder_->join();
-		} else {
-			delete encoder_.get();
-		}
+	if (isRunning_) {
+		return grpc::Status(grpc::StatusCode::ALREADY_EXISTS, "still job running");
 	}
 
 	std::time_t t = std::time(nullptr);
@@ -27,15 +23,18 @@ grpc::Status YukikazeServiceImpl::Encode(grpc::ServerContext* ctx, const EncodeR
 	strftime(buf, sizeof(buf), "%Y%m%d%H%M.log", now);
 	logpath_ = getLogDirPath() / std::string(buf);
 	
-	bool errorOccured = false;
 	try {
+		isRunning_ = true;
+		hasFailed_ = false;
 		encoder_ = std::make_unique<SubProcess>(SubProcess(logpath_, args));
 	} catch(...) {
-		errorOccured = true;
+		hasFailed_ = true;
 	}
+	isRunning_ = false;
 
-	if (errorOccured || encoder_->exitCode() != 0) {
-		spdlog::error("encode failed. details at %s", logpath_.c_str());
+	if (hasFailed_ || encoder_->exitCode() != 0 || !std::filesystem::exists(recordedpath_ / request->output_name())) {
+		hasFailed_ = true;
+		spdlog::error("encode failed. details at " + logpath_.string());
 		return grpc::Status(grpc::StatusCode::FAILED_PRECONDITION, "failed to encode");
 	}
 
@@ -128,7 +127,7 @@ void YukikazeServiceImpl::parseRequest(const EncodeRequest* request, std::vector
 	if (request->disable_delogo() || logopath_.count(request->service_id()) == 0) {
 		args.push_back("--no-delogo");
 	}
-	if (!request->disable_delogo() && logopath_.count(request->service_id() % 100000) > 0) { // logo exists
+	if (!request->disable_delogo() && logopath_.count(request->service_id()) > 0) { // logo exists
 		args.push_back("--logo");
 		args.push_back(logopath_[request->service_id() % 100000].string());
 	}
@@ -141,6 +140,6 @@ void YukikazeServiceImpl::parseRequest(const EncodeRequest* request, std::vector
 		args.push_back("--subtitles");
 	}
 	if (request->ignore_no_drcsmap()) {
-		args.push_back("--ignore-no-drcsmap");
+		args.push_back("ignore-no-drcsmap");
 	}
 }
