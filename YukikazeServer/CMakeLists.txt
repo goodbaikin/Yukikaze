@@ -20,7 +20,7 @@ include_directories(../Amatsukaze/Amatsukaze/linux)
 include_directories(../Amatsukaze/common)
 include_directories(../Amatsukaze/include)
 include_directories(../Amatsukaze/include_gpl)
-set(SRCS ../api/yukikaze.grpc.pb.cc ../api/yukikaze.pb.cc main.cpp encode.cpp subprocess.cpp yukikaze_server.cpp)
+set(SRCS ../api/yukikaze.grpc.pb.cc ../api/yukikaze.pb.cc main.cpp encode.cpp yukikaze_server.cpp)
 add_executable(${APP_NAME} ${SRCS})
 
 target_link_libraries(${APP_NAME}

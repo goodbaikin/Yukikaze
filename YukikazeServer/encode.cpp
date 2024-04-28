@@ -4,44 +4,9 @@
 #include "spdlog/spdlog.h"
 #include "api/yukikaze.grpc.pb.h"
 #include "yukikaze_server.hpp"
+#include <sys/wait.h>
 
 using namespace yukikaze;
-
-grpc::Status YukikazeServiceImpl::Encode(grpc::ServerContext* ctx, const EncodeRequest* request, EncodeResponse* reply) {
-	spdlog::info("Encode Request: {0} -> {1}", request->input_name(), request->output_name());
-
-	std::vector<std::string> args;
-	parseRequest(request, args);
-
-	if (isRunning_) {
-		return grpc::Status(grpc::StatusCode::ALREADY_EXISTS, "still job running");
-	}
-
-	std::time_t t = std::time(nullptr);
-    std::tm* now = std::localtime(&t);
-	char buf[64];
-	strftime(buf, sizeof(buf), "%Y%m%d%H%M.log", now);
-	logpath_ = getLogDirPath() / std::string(buf);
-	
-	try {
-		isRunning_ = true;
-		hasFailed_ = false;
-		encoder_ = std::make_unique<SubProcess>(SubProcess(logpath_, args));
-	} catch(...) {
-		hasFailed_ = true;
-	}
-	isRunning_ = false;
-
-	if (hasFailed_ || encoder_->exitCode() != 0 || !std::filesystem::exists(recordedpath_ / request->output_name())) {
-		hasFailed_ = true;
-		spdlog::error("encode failed. details at " + logpath_.string());
-		return grpc::Status(grpc::StatusCode::FAILED_PRECONDITION, "failed to encode");
-	}
-
-	std::filesystem::remove(logpath_);
-
-	return grpc::Status(grpc::Status::OK);
-}
 
 std::string YukikazeServiceImpl::decoderToStr(Decoder decoder) {
 	switch (decoder) {
@@ -129,7 +94,7 @@ void YukikazeServiceImpl::parseRequest(const EncodeRequest* request, std::vector
 			args.push_back("--logo");
 			args.push_back(logopath_[request->service_id() % 100000].string());
 		} else {
-			spdlog::warn("チャンネルID %d に対するロゴが見つかりませんでした。ロゴ消しを無効化します。", request->service_id());
+			spdlog::warn("チャンネルID {0} に対するロゴが見つかりませんでした。ロゴ消しを無効化します。", request->service_id());
 			args.push_back("--no-delogo");
 		}
 	}
@@ -144,4 +109,44 @@ void YukikazeServiceImpl::parseRequest(const EncodeRequest* request, std::vector
 	if (request->ignore_no_drcsmap()) {
 		args.push_back("ignore-no-drcsmap");
 	}
+}
+
+int YukikazeServiceImpl::exec(const std::vector<std::string> & args) {
+	char** argv = new char*[args.size()+1];
+	const char* cmd = args[0].c_str();
+	int fd;
+	int status;
+
+	pid_t pid = fork();
+	switch (pid) {
+	case -1:
+		perror("fork()");
+		throw(std::runtime_error("fork failed"));
+		break;
+	case 0:
+		fd = open(logpath_.c_str(), O_CREAT|FD_CLOEXEC, 0600);
+		if (fd < 0) {
+			perror("open()");
+			throw(std::runtime_error("open log file failed"));
+		}
+
+		if (dup2(fd, 2) < 0) {
+			perror("dup2()");
+			throw(std::runtime_error("dup2 failed"));
+		}
+		for (int i = 0; i < args.size(); i++) {
+			argv[i] = strdup(args[i].c_str());
+		}
+		argv[args.size()] = NULL;
+		if (execvp(cmd, argv) < 0) {
+			perror("failed to launch Amatsukaze");
+			throw(std::runtime_error("failed to launch Amatsukaze"));
+		}
+		break;
+	default:
+		pid_ = pid;
+		waitpid(pid_, &status, 0);
+		return WEXITSTATUS(status);
+	}
+	return -1;
 }

@@ -3,7 +3,6 @@
 
 #include <filesystem>
 #include "api/yukikaze.grpc.pb.h"
-#include "subprocess.hpp"
 
 namespace yukikaze {
 
@@ -23,7 +22,7 @@ private:
 	std::filesystem::path basepath_;
 	std::filesystem::path recordedpath_;
 	std::map<int,std::filesystem::path> logopath_;
-	std::unique_ptr<SubProcess> encoder_;
+	pid_t pid_;
 	bool isRunning_ = false;
 	bool hasFailed_ = false;
 
@@ -31,6 +30,7 @@ private:
 	void parseRequest(const EncodeRequest*, std::vector<std::string>&);
 	std::string decoderToStr(Decoder);
 	std::string encoderTypeToStr(EncoderType);
+	int exec(const std::vector<std::string> & args);
 	std::filesystem::path  getJLDirPath() {
 		return basepath_ / "JL";
 	}
