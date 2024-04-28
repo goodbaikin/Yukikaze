@@ -124,12 +124,14 @@ void YukikazeServiceImpl::parseRequest(const EncodeRequest* request, std::vector
 	}
 
 	// enable/disable delogo
-	if (request->disable_delogo() || logopath_.count(request->service_id()) == 0) {
-		args.push_back("--no-delogo");
-	}
-	if (!request->disable_delogo() && logopath_.count(request->service_id()) > 0) { // logo exists
-		args.push_back("--logo");
-		args.push_back(logopath_[request->service_id() % 100000].string());
+	if (!request->disable_delogo()) {
+		if (logopath_.count(request->service_id() % 100000) > 0) {
+			args.push_back("--logo");
+			args.push_back(logopath_[request->service_id() % 100000].string());
+		} else {
+			spdlog::warn("チャンネルID %d に対するロゴが見つかりませんでした。ロゴ消しを無効化します。", request->service_id());
+			args.push_back("--no-delogo");
+		}
 	}
 	if (request->ignore_no_logo()) {
 		args.push_back("--ignore-no-logo");
