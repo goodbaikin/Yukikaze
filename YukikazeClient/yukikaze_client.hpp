@@ -9,7 +9,7 @@ public:
 	void Encode(
 		std::string input, 
 		std::string output, 
-		int serviceId,
+		uint32_t serviceId,
 		int cmoutmask=2,
 		EncoderType encoderType=X264,
 		std::string encoder="x264",

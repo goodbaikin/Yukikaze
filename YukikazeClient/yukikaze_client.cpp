@@ -12,7 +12,7 @@ YukikazeClient::YukikazeClient(std::string target) {
 void YukikazeClient::Encode(
 	std::string input,
 	std::string output,
-	int serviceId,
+	uint32_t serviceId,
 	int cmoutmask,
 	EncoderType encoderType,
 	std::string encoder,

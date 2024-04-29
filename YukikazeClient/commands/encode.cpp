@@ -7,7 +7,7 @@ struct encodeOpt {
 	std::shared_ptr<std::string> server;
 	std::string input;
 	std::string output;
-	int serviceId;
+	uint32_t serviceId;
 	int cmoutmask = 2;
 	std::string encoderType = "x264";
 	std::string encoder = "x264";
