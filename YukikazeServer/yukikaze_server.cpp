@@ -64,6 +64,9 @@ grpc::Status YukikazeServiceImpl::Encode(grpc::ServerContext* ctx, const EncodeR
 	char buf[64];
 	strftime(buf, sizeof(buf), "%Y%m%d%H%M.log", now);
 	logpath_ = getLogDirPath() / std::string(buf);
+
+	for (const auto& entry : std::filesystem::directory_iterator(getTmpDirPath())) 
+        std::filesystem::remove_all(entry.path());
 	
 	int exitCode = 0;
 	try {
