@@ -42,7 +42,6 @@ void YukikazeClient::Encode(
 	request.set_h264_decoder(h264_decoder);
 
 	grpc::ClientContext ctx;
-	ctx.set_deadline(std::chrono::system_clock::now() + std::chrono::seconds(1));
 	EncodeResponse resp;
 	grpc::Status status = stub_->Encode(&ctx, request, &resp);
 	if (status.ok()) {
